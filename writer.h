@@ -70,7 +70,6 @@ void FilterLogs(Logs** main, LogLevel priority);
 void ClearLogs(Logs** main);
 
 /////////////////////////////////////////////////////////
-// #define WRITER_IMPLEMENTATION // <--------------- REMOVE THIS LINE IN PRODUCTION
 // Implementation
 #ifdef WRITER_IMPLEMENTATION
 
