@@ -57,11 +57,10 @@ typedef struct
 } DataWithLogs;
 
 DataWithLogs Flatten(DataWithLogs* inp, DataWithLogs (*function)(Any, va_list), ...);
-
-void PrependLogs(Logs* from_tail, Logs* to_tail);
-void ConcatLogs(Logs* main, Logs* secondary);
 void AddLog(Logs* main, LogLevel priority, const char* message);
+
 // Move to documentation: All logs having a priority < specified arg are removed
+// Port this to work with DataWithLogs instead of the Logs themselves
 void FilterLogs(Logs** main, LogLevel priority);
 void ClearLogs(Logs** main);
 
@@ -72,67 +71,65 @@ void ClearLogs(Logs** main);
 // Implementation
 #ifdef WRITER_IMPLEMENTATION
 
-void PrependLogs(Logs* from_tail, Logs* to_tail)
+static Logs* __new(LogLevel level, const char* message)
 {
-	if(from_tail == NULL)
-		return;
-	Logs* tmp = from_tail;
-	if(to_tail != NULL)
-	{
-		to_tail = from_tail;
-		while(tmp->next != NULL)
-			tmp = tmp->next;
-		tmp->next = to_tail;
-	}
-	to_tail = from_tail;
+	Logs* out = (Logs*)malloc(sizeof(Logs));
+	assert(out != NULL);
+	out->priority = level;
+	out->data = message;
+	out->next = NULL;
+	return out;
 }
 
-void ConcatLogs(Logs* main, Logs* secondary)
+static void __append(Logs* from_node, Logs* to_node)
 {
-	if(main == NULL)
+	if(from_node == NULL)
 		return;
-	Logs* tmp;
-	tmp = main;
-	while(tmp->next != NULL)
+
+	Logs* tmp = to_node;
+	while(tmp != NULL)
 		tmp = tmp->next;
 
-	tmp->next = secondary;
+	Logs* ref = from_node;
+	while(ref != NULL)
+	{
+		tmp = __new(ref->priority, ref->data);
+		ref = ref->next;
+		tmp = tmp->next;
+	}
 }
 
-void AddLog(Logs* main, LogLevel priority, const char* message)
+static void __prepend(Logs* from_node, Logs* to_node)
 {
-	assert(message != NULL);
-	assert(main != NULL);
-
-	Logs* newLogs = (Logs*)malloc(sizeof(Logs));
-	assert(newLogs != NULL);
-
-	newLogs->priority = priority;
-	newLogs->data = message;
-	newLogs->next = NULL;
-
-	ConcatLogs(main, newLogs);
+	Logs* tmp = NULL;
+	__append(from_node, tmp);
+	Logs* tmp_tail = tmp;
+	while(tmp != NULL)
+		tmp = tmp->next;
+	tmp = to_node;
+	to_node = tmp_tail;
 }
 
-void FilterLogs(Logs** main, LogLevel priority)
+void __remove_partial(Logs** from_node, LogLevel threshold)
 {
-	assert(main != NULL);
-	if(*main == NULL)
+	assert(from_node != NULL);
+	if(*from_node == NULL)
 		return;
 
-	Logs* tmp = *main;
-	while(tmp != NULL && tmp->priority < priority)
+	Logs* tmp = *from_node;
+	while(tmp != NULL && tmp->priority < threshold)
 	{
-		*main = tmp->next;
+		*from_node = tmp->next;
 		free(tmp);
-		tmp = *main;
-		continue;
+		tmp = *from_node;
 	}
+	if(*from_node == NULL)
+		return;
 
 	Logs* tmp_next = NULL;
 	while(tmp->next != NULL)
 	{
-		if(tmp->next->priority < priority)
+		if(tmp->next->priority < threshold)
 		{
 			tmp_next = tmp->next->next;
 			free(tmp->next);
@@ -145,21 +142,20 @@ void FilterLogs(Logs** main, LogLevel priority)
 	}
 }
 
-void ClearLogs(Logs** main)
+static void __remove_all(Logs** from_node)
 {
-	assert(main != NULL);
-	if(*main == NULL)
+	assert(from_node != NULL);
+	if(*from_node == NULL)
 		return;
-
-	Logs* tmp = *main;
-	while(tmp->next)
+	Logs* tmp = (*from_node)->next;
+	while(tmp != NULL)
 	{
-		*main = tmp->next;
-		free(tmp);
-		tmp = *main;
+		tmp = tmp->next;
+		free((*from_node)->next);
+		(*from_node)->next = tmp;
 	}
-	free(tmp);
-	*main = NULL;
+	free(*from_node);
+	*from_node = NULL;
 }
 
 DataWithLogs Flatten(DataWithLogs* inp, DataWithLogs (*function)(Any, va_list), ...)
@@ -171,7 +167,7 @@ DataWithLogs Flatten(DataWithLogs* inp, DataWithLogs (*function)(Any, va_list), 
 	DataWithLogs result = function(inp->data, vp);
 	va_end(vp);
 
-	PrependLogs(inp->tail, result.tail);
+	__prepend(inp->tail, result.tail);
 	return result;
 }
 
