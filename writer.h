@@ -27,19 +27,19 @@ typedef enum
 	FLOAT,
 	DOUBLE,
 	CHAR,
-	GENERIC
+	GENERICPTR
 } DataType;
 
 typedef union
 {
-	uint64_t* int64ptr;
-	int* intptr;
-	const char** strptr;
-	float* floatptr;
-	double* doubleptr;
-	char* charptr;
-	void* genericptr;
-} Anyptr;
+	uint64_t t_uint64;
+	int t_int;
+	const char* t_str;
+	float t_float;
+	double t_double;
+	char t_char;
+	void* t_genericptr;
+} Any;
 
 typedef struct Logs Logs;
 struct Logs
@@ -52,50 +52,39 @@ struct Logs
 typedef struct
 {
 	const DataType type;
-	Anyptr data;
+	Any data;
 	Logs* tail;
 } DataWithLogs;
 
-DataWithLogs WrapWithLogs(DataType type, void* dataptr);
-void Flatten(DataWithLogs* inp, DataWithLogs (*function)(Anyptr dataptr, va_list vlist), ...);
-void FlattenNew(DataWithLogs* inp,
-				DataWithLogs* output,
-				DataWithLogs (*function)(Anyptr dataptr, va_list vlist),
-				...);
+DataWithLogs Flatten(DataWithLogs* inp, DataWithLogs (*function)(Any, va_list), ...);
 
+void PrependLogs(Logs* from_tail, Logs* to_tail);
 void ConcatLogs(Logs* main, Logs* secondary);
 void AddLog(Logs* main, LogLevel priority, const char* message);
 // Move to documentation: All logs having a priority < specified arg are removed
 void FilterLogs(Logs** main, LogLevel priority);
 void ClearLogs(Logs** main);
 
+// TODO: Add functionality to display the logs of some data in various ways.
+
 /////////////////////////////////////////////////////////
+#define WRITER_IMPLEMENTATION
 // Implementation
 #ifdef WRITER_IMPLEMENTATION
 
-DataWithLogs WrapWithLogs(DataType type, void* dataptr)
+void PrependLogs(Logs* from_tail, Logs* to_tail)
 {
-	DataWithLogs logs = {.type = type, .tail = NULL};
-
-	switch(type)
+	if(from_tail == NULL)
+		return;
+	Logs* tmp = from_tail;
+	if(to_tail != NULL)
 	{
-	case UINT64:
-		logs.data.int64ptr = (uint64_t*)dataptr;
-	case INT:
-		logs.data.intptr = (int*)dataptr;
-	case STR:
-		logs.data.strptr = (const char**)dataptr;
-	case FLOAT:
-		logs.data.floatptr = (float*)dataptr;
-	case DOUBLE:
-		logs.data.doubleptr = (double*)dataptr;
-	case CHAR:
-		logs.data.charptr = (char*)dataptr;
-	case GENERIC:
-		logs.data.genericptr = dataptr;
+		to_tail = from_tail;
+		while(tmp->next != NULL)
+			tmp = tmp->next;
+		tmp->next = to_tail;
 	}
-
-	return logs;
+	to_tail = from_tail;
 }
 
 void ConcatLogs(Logs* main, Logs* secondary)
@@ -173,7 +162,7 @@ void ClearLogs(Logs** main)
 	*main = NULL;
 }
 
-void Flatten(DataWithLogs* inp, DataWithLogs (*function)(Anyptr dataptr, va_list vlist), ...)
+DataWithLogs Flatten(DataWithLogs* inp, DataWithLogs (*function)(Any, va_list), ...)
 {
 	assert(inp != NULL);
 
@@ -182,26 +171,8 @@ void Flatten(DataWithLogs* inp, DataWithLogs (*function)(Anyptr dataptr, va_list
 	DataWithLogs result = function(inp->data, vp);
 	va_end(vp);
 
-	assert(inp->type == result.type);
-	inp->data = result.data;
-	ConcatLogs(inp->tail, result.tail);
-}
-
-void FlattenNew(DataWithLogs* inp,
-				DataWithLogs* output,
-				DataWithLogs (*function)(Anyptr dataptr, va_list vlist),
-				...)
-{
-	assert(inp != NULL);
-
-	va_list vp;
-	va_start(vp, function);
-	DataWithLogs result = function(inp->data, vp);
-	va_end(vp);
-
-	assert(output->type == result.type);
-	output->data = result.data;
-	ConcatLogs(output->tail, result.tail);
+	PrependLogs(inp->tail, result.tail);
+	return result;
 }
 
 #endif
