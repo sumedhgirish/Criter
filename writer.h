@@ -56,16 +56,6 @@ typedef struct
 	Logs* tail;
 } DataWithLogs;
 
-DataWithLogs Flatten(DataWithLogs* inp, DataWithLogs (*function)(Any, va_list), ...);
-void AddLog(Logs* main, LogLevel priority, const char* message);
-
-// Move to documentation: All logs having a priority < specified arg are removed
-// Port this to work with DataWithLogs instead of the Logs themselves
-void FilterLogs(Logs** main, LogLevel priority);
-void ClearLogs(Logs** main);
-
-// TODO: Add functionality to display the logs of some data in various ways.
-
 /////////////////////////////////////////////////////////
 #define WRITER_IMPLEMENTATION
 // Implementation
@@ -156,19 +146,6 @@ static void __remove_all(Logs** from_node)
 	}
 	free(*from_node);
 	*from_node = NULL;
-}
-
-DataWithLogs Flatten(DataWithLogs* inp, DataWithLogs (*function)(Any, va_list), ...)
-{
-	assert(inp != NULL);
-
-	va_list vp;
-	va_start(vp, function);
-	DataWithLogs result = function(inp->data, vp);
-	va_end(vp);
-
-	__prepend(inp->tail, result.tail);
-	return result;
 }
 
 #endif
