@@ -1,5 +1,4 @@
 #pragma once
-#define COLORIZE 0
 
 // Header Part
 #ifndef WRITER_H_
@@ -65,8 +64,8 @@ typedef struct
 
 DataWithLogs Wrap(DataType type, Any data);
 void Log(DataWithLogs* to_ptr, LogLevel priority, const char* format, ...);
-DataWithLogs Unit(DataWithLogs (*func)(Any), DataWithLogs* inp_ptr);
-void Display(DataWithLogs* inp_ptr, LogLevel threshold);
+DataWithLogs Unit(DataWithLogs (*func)(Any), DataType type, DataWithLogs* inp_ptr);
+void Display(FILE* stream, DataWithLogs* inp_ptr, LogLevel threshold);
 
 /////////////////////////////////////////////////////////
 #define WRITER_IMPLEMENTATION
