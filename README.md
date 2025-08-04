@@ -50,15 +50,15 @@ The library api is mainly composed of 4 functions.
 ```{c}
 DataWithLogs Wrap(DataType type, Any data);
 ```
-    Exactly like its name, the ```Wrap``` function allows you to wrap any value to structure that supports logging into it, like ```DataWithLogs```.
-    It takes in 2 parameters, a ```DataType``` that specifies the type of the value to be wrapped, and an ```Any``` value, which is specified by that
-    type, and returns wrapped data.
+Exactly like its name, the ```Wrap``` function allows you to wrap any value to structure that supports logging into it, like ```DataWithLogs```.
+It takes in 2 parameters, a ```DataType``` that specifies the type of the value to be wrapped, and an ```Any``` value, which is specified by that
+type, and returns wrapped data.
 
 #### Log
 ```{c}
 void Log(DataWithLogs* to_ptr, LogLevel priority, const char* format, ...);
 ```
-    The Log function allows to add logs to ```DataWithLogs```. It works exactly like printf function, except that it also takes in a ```LogLevel```
-    along with the other parameters taken by the printf function, along with a pointer to the Data to which you want to add Logs to.
+The Log function allows to add logs to ```DataWithLogs```. It works exactly like printf function, except that it also takes in a ```LogLevel```
+along with the other parameters taken by the printf function, along with a pointer to the Data to which you want to add Logs to.
 
 
