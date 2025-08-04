@@ -57,7 +57,7 @@ struct Logs
 
 typedef struct
 {
-	const DataType type;
+	DataType type;
 	Any data;
 	Logs* tail;
 } DataWithLogs;
@@ -118,9 +118,10 @@ static void __append_immediate(Logs* from_node, Logs** to_node_ptr)
 		*to_node_ptr = from_node;
 	else
 	{
-		while((*to_node_ptr)->next != NULL)
-			(*to_node_ptr) = (*to_node_ptr)->next;
-		(*to_node_ptr)->next = from_node;
+		Logs* tmp = (*to_node_ptr);
+		while(tmp->next != NULL)
+			tmp = tmp->next;
+		tmp->next = from_node;
 	}
 }
 
@@ -132,13 +133,14 @@ static void __prepend(Logs* from_node, Logs** to_node_ptr)
 		__append(from_node, to_node_ptr);
 		return;
 	}
-	Logs* tmp = *to_node_ptr;
-	*to_node_ptr = NULL;
-	__append(from_node, to_node_ptr);
-	assert(*to_node_ptr != NULL);
-	while((*to_node_ptr)->next != NULL)
-		(*to_node_ptr) = (*to_node_ptr)->next;
-	(*to_node_ptr)->next = tmp;
+	Logs *tmp = NULL, *swap = NULL;
+	__append(from_node, &tmp);
+	assert(tmp != NULL);
+	swap = tmp;
+	while(tmp->next != NULL)
+		(tmp) = tmp->next;
+	tmp->next = (*to_node_ptr);
+	*to_node_ptr = swap;
 }
 
 static void __prepend_immediate(Logs* from_node, Logs** to_node_ptr)
@@ -261,7 +263,7 @@ static void __display_color(FILE* stream, Logs* from_ptr)
 		color = ANSI_GREEN;
 		break;
 	case OK:
-		level = "  OK ";
+		level = "OKAY ";
 		color = ANSI_RESET;
 		break;
 	}
@@ -289,7 +291,7 @@ static void __display(FILE* stream, Logs* from_ptr)
 		level = "INFO ";
 		break;
 	case OK:
-		level = "  OK ";
+		level = "OKAY ";
 		break;
 	}
 	fprintf(stream, "[%s] %s\n", level, from_ptr->data);
