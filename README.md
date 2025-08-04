@@ -37,7 +37,7 @@ examples.
 This project takes its motivation from this [video](https://www.youtube.com/watch?v=C2w45qRc3aU) about monads and why they are
 useful. It is recommended that you watch this video if you are not familiar with what monads are or how to use them.
 
-### Section 2: Examples
+### Section 2: Documentation
 
 The library api is mainly composed of 4 functions.
 
