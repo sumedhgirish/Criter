@@ -61,4 +61,19 @@ void Log(DataWithLogs* to_ptr, LogLevel priority, const char* format, ...);
 The Log function allows to add logs to ```DataWithLogs```. It works exactly like printf function, except that it also takes in a ```LogLevel```
 along with the other parameters taken by the printf function, along with a pointer to the Data to which you want to add Logs to.
 
+#### Unit
+```{c}
+DataWithLogs Unit(DataWithLogs (*func)(Any), DataType type, DataWithLogs* inp_ptr);
+```
+This is in essence the heart and soul of the library. It allows you to chain functions one after another without having to worry about making sure
+that the data the functions act on logs the values correctly. The Unit method takes a function that operates on a generic type ```Any``` with its
+own logs, and the ```DataType``` that the function expects as input, along with a pointer to the input we want to add logs to. It then returns the
+output of the function given the input, along with the total logs.
 
+#### Display
+```{c}
+void Display(FILE* stream, DataWithLogs* inp_ptr, LogLevel threshold);
+
+```
+As the name suggests, this function is used to display the logs of some data. If your terminal supports colors, then the ```COLORIZE``` macro
+adds color to the output.
