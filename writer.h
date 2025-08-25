@@ -68,7 +68,7 @@ DataWithLogs Unit(DataWithLogs (*func)(Any), DataType type, DataWithLogs* inp_pt
 void Display(FILE* stream, DataWithLogs* inp_ptr, LogLevel threshold);
 
 /////////////////////////////////////////////////////////
-#define WRITER_IMPLEMENTATION
+
 // Implementation
 #ifdef WRITER_IMPLEMENTATION
 
